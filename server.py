@@ -38,12 +38,14 @@ def handle_client(conn, addr):
         elif players == 1:
             player = 2
             players = 2
+        # print("41: sending playernum", player, " end")
         conn.send(str(player).encode(FORMAT))
         print(players)
         data = conn.recv(1024)
+        # print("44: recieved data from client", data, " end")
         if not data:
             break
-        #print(f"[COMMAND] {addr}, Command: {str(data)}")
+        # print(f"[COMMAND] {addr}, Command: {str(data)}")
         """if player1 is not None:
             player = 2
             player2 = playerclass()
@@ -54,16 +56,19 @@ def handle_client(conn, addr):
         data = data.decode(FORMAT)
         if data == "getpos":
             thingToReturn = str([player1.x, player1.y, player2.x, player2.y])
+            # print("57:sending", thingToReturn, "end")
+            conn.send(thingToReturn.encode())
         if data == "setpos":
             getclientpos(conn, player)
-        conn.send(thingToReturn.encode())
     players -= 1
     conn.close()
 
 
 def getclientpos(conn, playernum):
+    # print("69: sending pos to client", "pos", " end")
     conn.send("pos".encode(FORMAT))
-    pos = conn.recv(1024).decode()
+    pos = conn.recv(1024)
+    # print("69:The data recieved from client is", pos, " end")
     pos = eval(pos)
     if playernum == 1:
         player1.x = pos[0]

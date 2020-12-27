@@ -12,7 +12,7 @@ HEADER = 64
 PORT = 5050
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
-SERVER = "192.168.2.100"
+SERVER = "127.0.1.1"
 ADDR = (SERVER, PORT)
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -43,7 +43,7 @@ class player(object):
         message = "getpos".encode(FORMAT)
         client.send(message)
         pos = client.recv(4096).decode(FORMAT)
-        print(type(pos))
+        
         pos = eval(pos)
         if self.playernum == 1:
             self.serverx = pos[0]
@@ -54,8 +54,12 @@ class player(object):
 
     def setglobalpos(self):
         pos = ""
+        playernum = client.recv(1024).decode(FORMAT)
+        self.playernum = playernum
         client.send("setpos".encode(FORMAT))
-        pos = eval(client.recv(1024).decode(FORMAT))
+        tmp = client.recv(1024).decode(FORMAT)
+        
+        pos = eval(tmp)
         client.send(str((self.x, self.y)).encode(FORMAT))
         #print(pos)
 
@@ -108,7 +112,7 @@ p = player()
 clock = pygame.time.Clock()
 run = True
 while run:
-    clock.tick(60)
+    clock.tick(6000)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
