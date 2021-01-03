@@ -4,10 +4,9 @@ import threading
 HEADER = 64
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())  # Will automatically find local ip address
-print(SERVER)
 ADDR = (SERVER, PORT)
 FORMAT = "utf-8"
-DISCONNECT_MESSAGE = "!DISCONNECT"
+DISCONNECT_MESSAGE = "DISCONNECT"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind(ADDR)
@@ -18,75 +17,57 @@ clients = []
 class playerclass():
     def __init__(self):
         self.x = 0
-        self.y = 0
+        self.y = 800 - 90 - 30
+        self.disconnected = False
 
 
 player1 = playerclass()
 player2 = playerclass()
-players = 0
+totalPlayers = 0
 
 
 def handle_client(conn, addr):
-    global player1, player2, players
-    player = 0
+    global player1, player2, totalPlayers
+    player = 1
     thingToReturn = ""
+    initialized = False
     connected = True
     print(f"[CONNECTION] {addr}")
     while connected:
-        if players == 0:
-            player = 1
-            players = 1
-        elif players == 1:
-            player = 2
-            players = 2
-        # print("41: sending playernum", player, " end")
-        conn.send(str(player).encode(FORMAT))
-        print(players)
+        print(totalPlayers)
         data = conn.recv(1024)
-        # print("44: recieved data from client", data, " end")
         if not data:
             break
-        # print(f"[COMMAND] {addr}, Command: {str(data)}")
-        """if player1 is not None:
-            player = 2
-            player2 = playerclass()
-        else:
-            player = 1
-            player1 = playerclass()"""
-
         data = data.decode(FORMAT)
-        if data == "getpos":
-            thingToReturn = str([player1.x, player1.y, player2.x, player2.y])
-            # print("57:sending", thingToReturn, "end")
-            conn.send(thingToReturn.encode())
-            print("")
-        if data == "setpos":
-            getclientpos(conn, player)
-    players -= 1
+        if data == "pos":
+            clientpos = eval(conn.recv(1024).decode())
+            conn.send(f"{player}, {player1.x}, {player1.y}, {player2.x}, {player2.y}".encode(FORMAT))
+            if player == 1:
+                player1.x = clientpos[0]
+                player1.y = clientpos[1]
+            else:
+                player2.x = clientpos[0]
+                player2.y = clientpos[1]
+        if data == "init":
+            if player == 1 and totalPlayers == 0:
+                player = totalPlayers + 1
+                totalPlayers += 1
+            else:
+                player = totalPlayers + 1
+                totalPlayers = 2
+
+            conn.send(f"{player}, {player1.x}, {player1.y}, {player2.x}, {player2.y}".encode(FORMAT))
+        if data == "DISCONNECT":
+            connected = False
+        print(f"Player1 : {player1.x}, {player1.y}\n"
+              f"Player2 : {player2.x}, {player2.y}")
+    totalPlayers -= 1
+    print(f'[CONNECTION CLOSED] BY:{addr}')
     conn.close()
 
 
-def getclientpos(conn, playernum):
-    # print("69: sending pos to client", "pos", " end")
-    conn.send("pos".encode(FORMAT))
-    pos = conn.recv(1024)
-    # print("69:The data recieved from client is", pos, " end")
-    pos = eval(pos)
-    if playernum == 1:
-        player1.x = pos[0]
-        player1.y = pos[1]
-    else:
-        player2.x = pos[0]
-        player2.y = pos[1]
-    print(f"Player1: {player1.x}, {player1.y}")
-    try:
-        print(f"Player2: {player2.x}, {player2.y}")
-    except:
-        print("Player2 not initalized")
-
-
 def start():
-    server.listen()
+    server.listen(2)
     print(f"[LISTENING] Server is listening on {SERVER}")
     while True:
         conn, addr = server.accept()
@@ -95,5 +76,4 @@ def start():
 
 
 print("[STARTING] server is starting...")
-print("hello")
 start()
